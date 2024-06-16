@@ -1,0 +1,33 @@
+{
+  "name": "@kuankuan/log-control",
+  "version": "0.1.0",
+  "description": "The cli of node:crypto",
+  "main": "dist/index.cjs",
+  "module": "dist/index.cjs",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "lint": "eslint --fix",
+    "build": "node ./command/build.mjs"
+  },
+  "keywords": [
+    "cli",
+    "node",
+    "crypto"
+  ],
+  "author": "kuankuan",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "@kuankuan/eslint-2024": "^1.0.2",
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.14.2",
+    "esbuild": "^0.21.5",
+    "eslint": "^9.4.0"
+  },
+  "type": "module",
+  "dependencies": {
+    "picocolors": "^1.0.1"
+  },
+  "files": [
+    "dist/**/*.*"
+  ]
+}
