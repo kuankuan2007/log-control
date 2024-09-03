@@ -1,0 +1,43 @@
+{
+  "name": "@kuankuan/log-control",
+  "version": "1.0.0",
+  "description": "A Python-style log library",
+  "main": "dist/index.js",
+  "scripts": {
+    "lint": "eslint src/**/* --fix",
+    "test": "node command/test.mjs",
+    "build": "tsc && tsc-alias"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/kuankuan2007/log-control.git"
+  },
+  "author": "kuankuan",
+  "license": "MulanPSL-2.0",
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "@kuankuan/eslint-2024": "^1.0.3",
+    "@rushstack/eslint-patch": "^1.10.1",
+    "@types/node": "^22.5.2",
+    "@types/string-format": "^2.0.3",
+    "@typescript-eslint/eslint-plugin": "^7.5.0",
+    "@typescript-eslint/parser": "^7.5.0",
+    "esbuild": "^0.20.2",
+    "eslint": "^8.57.0",
+    "tsc-alias": "^1.8.10",
+    "typescript": "^5.4.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "keywords": [
+    "markdown",
+    "parser",
+    "kuankuan"
+  ],
+  "dependencies": {
+    "colors-console": "^1.0.3",
+    "string-format": "^2.0.0"
+  }
+}
