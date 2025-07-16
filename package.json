@@ -4,7 +4,8 @@
   "description": "A more detailed log library",
   "main": "dist/index.js",
   "scripts": {
-    "lint": "eslint src/**/* --fix",
+    "lint": "eslint src/**/*",
+    "lint:fix": "eslint src/**/* --fix",
     "test": "node command/test.mjs",
     "build": "tsc"
   },
