@@ -1,7 +1,8 @@
 import { Writable } from 'stream';
-import Application from './app.js';
+import { Application } from './app.js';
 import { FormatterArgs, getDateFormatterArgs, Level, LEVEL, levelNames } from './types.js';
 import stringFormat from 'string-format';
+import fs from 'fs';
 
 export type RecorderConstructorOptions = {
   formatter?: string | (() => string);
@@ -14,8 +15,8 @@ export abstract class Recorder {
   private formatter: (args: FormatterArgs) => string;
   private dateFormatter: (date: Date) => string;
   private stringify: (data: any) => string;
-  constructor(options: RecorderConstructorOptions) {
-    this.startLevel = options.startLevel || Level.Warn;
+  constructor(options: RecorderConstructorOptions = {}) {
+    this.startLevel = options.startLevel !== undefined ? options.startLevel : Level.Warn;
     this.formatter = (() => {
       const _formatter = options.formatter || '[{time}] [{level}] [{path}]: {message}';
       if (typeof _formatter === 'string') {
@@ -27,7 +28,7 @@ export abstract class Recorder {
     })();
     this.dateFormatter = (() => {
       const _dateFormatter =
-        options.dateFormatter || '{fullYear}-{month}-{date} {hour}:{minute}:{second}';
+        options.dateFormatter || '{year}-{month}-{date} {hour}:{minute}:{second}';
       if (typeof _dateFormatter === 'string') {
         return (date: Date) => {
           return stringFormat(_dateFormatter, getDateFormatterArgs(date));
@@ -55,21 +56,17 @@ export abstract class Recorder {
 export class ConsoleRecorder extends Recorder {
   private readonly option: {
     styleConfig: Record<LEVEL, string>;
-    logExample: boolean;
-    logLevelBefore: boolean;
     showApplication: boolean;
   };
-  constructor(option: {
-    styleConfig?: Record<LEVEL, string>;
-    startLevel?: LEVEL;
-    logExample?: boolean;
-    logLevelBefore?: boolean;
-    showApplication?: boolean;
-  }) {
-    super({ startLevel: option.startLevel || Level.Debug });
+  constructor(
+    option: {
+      styleConfig?: Record<LEVEL, string>;
+      startLevel?: LEVEL;
+      showApplication?: boolean;
+    } = {}
+  ) {
+    super({ startLevel: option.startLevel === undefined ? Level.Debug : option.startLevel });
     this.option = {
-      logExample: true,
-      logLevelBefore: false,
       showApplication: false,
       ...option,
       styleConfig: {
@@ -88,10 +85,11 @@ export class ConsoleRecorder extends Recorder {
   log(level: LEVEL, path: string, message: any, application: Application): void {
     const style = this.option.styleConfig[level];
     const argList = [
-      ...(this.option.logLevelBefore ? [] : [`%c[${levelNames[level]}]`, style]),
-      ...(this.option.showApplication ? [] : [`%c[${application}]`, style]),
-      ...[`%c${path}`, style],
-      ...(typeof message !== 'string' ? [message] : [`%c${message}`, style]),
+      `%c[${levelNames[level]}]`,
+      style,
+      ...(this.option.showApplication ? [] : [`[${application.name}]`]),
+      ...[`[${path}]`],
+      ...(typeof message !== 'string' ? [message] : [`${message}`]),
     ];
     switch (level) {
       case Level.All:
@@ -114,7 +112,7 @@ export class ConsoleRecorder extends Recorder {
 }
 export class WriteableRecorder extends Recorder {
   private readonly writeable: Writable;
-  constructor(writeable: Writable, option: RecorderConstructorOptions) {
+  constructor(writeable: Writable, option: RecorderConstructorOptions = {}) {
     if (writeable.writableEnded || writeable.closed) {
       throw new Error('The writeable is already ended.');
     }
@@ -129,4 +127,39 @@ export class WriteableRecorder extends Recorder {
   write(msg: string): void {
     this.writeable.write(msg);
   }
+}
+export class NullRecorder extends Recorder {
+  close() {}
+  write() {}
+}
+export class FileRecorder extends WriteableRecorder {
+  constructor(path: string, option: RecorderConstructorOptions = {}) {
+    super(fs.createWriteStream(path), option);
+  }
+}
+export class EventEmitterRecorder extends Recorder {
+  private listeners: ((info: {
+    level: LEVEL;
+    path: string;
+    message: any;
+    application: string;
+  }) => void)[] = [];
+  constructor() {
+    super({ startLevel: Level.All });
+  }
+  log(level: LEVEL, path: string, message: any, application: Application): void {
+    this.listeners.forEach((listener) => {
+      listener({ level, path, message: message, application: application.name });
+    });
+  }
+  addListener(
+    listener: (info: { level: LEVEL; path: string; message: any; application: string }) => void
+  ) {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter((l) => l !== listener);
+    };
+  }
+  write() {}
+  close() {}
 }

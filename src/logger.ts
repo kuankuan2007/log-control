@@ -1,7 +1,7 @@
-import Application from './app.js';
+import {Application} from './app.js';
 import { LoggerPath, Level, LEVEL } from './types.js';
 
-export default class Logger {
+export class Logger {
   private readonly path: LoggerPath;
   private readonly application: Application;
   constructor(path: LoggerPath, application: Application) {

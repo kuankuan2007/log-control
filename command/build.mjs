@@ -1,6 +1,6 @@
 import childProcess from 'child_process';
 import fs from 'fs';
-const dirs = ['dist', 'types'];
+const dirs = ['dist'];
 for (const dir of dirs) {
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, { recursive: true });
