@@ -1,6 +1,6 @@
 {
   "name": "@kuankuan/log-control",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A more detailed log library",
   "main": "dist/index.js",
   "scripts": {
