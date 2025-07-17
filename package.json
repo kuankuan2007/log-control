@@ -13,6 +13,10 @@
     "type": "git",
     "url": "https://gitee.com/kuankuan2007/log-control.git"
   },
+  "homepage": "https://github.com/kuankuan2007/log-control",
+  "bugs": {
+    "url": "https://github.com/kuankuan2007/log-control/issues"
+  },
   "author": "kuankuan",
   "license": "MulanPSL-2.0",
   "types": "dist/index.d.ts",
@@ -35,7 +39,6 @@
     "kuankuan"
   ],
   "dependencies": {
-    "colors-console": "^1.0.3",
     "string-format": "^2.0.0"
   }
 }
