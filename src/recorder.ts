@@ -5,38 +5,40 @@ import stringFormat from 'string-format';
 import fs from 'fs';
 
 export type RecorderConstructorOptions = {
-  formatter?: string | (() => string);
+  formatter?: string | ((args: FormatterArgs) => string);
   dateFormatter?: string | ((date: Date) => string);
   stringify?: (data: any) => string;
   startLevel?: LEVEL;
 };
 export abstract class Recorder {
   startLevel: LEVEL;
-  private formatter: (args: FormatterArgs) => string;
-  private dateFormatter: (date: Date) => string;
-  private stringify: (data: any) => string;
-  constructor(options: RecorderConstructorOptions = {}) {
-    this.startLevel = options.startLevel !== undefined ? options.startLevel : Level.Warn;
+  protected formatter: (args: FormatterArgs) => string;
+  protected dateFormatter: (date: Date) => string;
+  protected stringify: (data: any) => string;
+  constructor({
+    formatter = '[{time}] [{level}] [{path}] [{time}]: {message}',
+    dateFormatter = '{year}-{month}-{date} {hour}:{minute}:{second}',
+    stringify = (data: any) => data.toString(),
+    startLevel = Level.Warn,
+  }: RecorderConstructorOptions = {}) {
+    this.startLevel = startLevel;
     this.formatter = (() => {
-      const _formatter = options.formatter || '[{time}] [{level}] [{path}]: {message}';
-      if (typeof _formatter === 'string') {
+      if (typeof formatter === 'string') {
         return (args: FormatterArgs) => {
-          return stringFormat(_formatter, args);
+          return stringFormat(formatter, args);
         };
       }
-      return _formatter;
+      return formatter;
     })();
     this.dateFormatter = (() => {
-      const _dateFormatter =
-        options.dateFormatter || '{year}-{month}-{date} {hour}:{minute}:{second}';
-      if (typeof _dateFormatter === 'string') {
+      if (typeof dateFormatter === 'string') {
         return (date: Date) => {
-          return stringFormat(_dateFormatter, getDateFormatterArgs(date));
+          return stringFormat(dateFormatter, getDateFormatterArgs(date));
         };
       }
-      return _dateFormatter;
+      return dateFormatter;
     })();
-    this.stringify = options.stringify || ((data: any) => data.toString());
+    this.stringify = stringify;
   }
   log(level: LEVEL, path: string, message: any, application: Application) {
     let msg = this.formatter({
@@ -54,40 +56,41 @@ export abstract class Recorder {
   abstract close(): Promise<void> | void;
 }
 export class ConsoleRecorder extends Recorder {
-  private readonly option: {
-    styleConfig: Record<LEVEL, string>;
-    showApplication: boolean;
-  };
-  constructor(
-    option: {
-      styleConfig?: Record<LEVEL, string>;
-      startLevel?: LEVEL;
-      showApplication?: boolean;
-    } = {}
-  ) {
-    super({ startLevel: option.startLevel === undefined ? Level.Debug : option.startLevel });
-    this.option = {
-      showApplication: false,
-      ...option,
-      styleConfig: {
-        [Level.All]: 'color: gray;',
-        [Level.Trace]: 'color: gray;font-weight: bold;',
-        [Level.Debug]: 'color: blue;',
-        [Level.Info]: 'color:blue;font-weight: bold;',
-        [Level.Warn]: 'color: orange;font-weight: bold;',
-        [Level.Error]: 'color: red;font-weight: bold;',
-        [Level.Fatal]: 'color: red;font-weight: bold;',
-        [Level.Off]: 'color: red;font-weight: bold;',
-        ...option.styleConfig,
-      },
-    };
+  protected readonly showApplication: boolean;
+  protected readonly styleConfig: Record<LEVEL, string>;
+  protected readonly showTime: boolean;
+  constructor({
+    styleConfig = {
+      [Level.All]: 'color: gray;',
+      [Level.Trace]: 'color: gray;font-weight: bold;',
+      [Level.Debug]: 'color: blue;',
+      [Level.Info]: 'color:blue;font-weight: bold;',
+      [Level.Warn]: 'color: orange;font-weight: bold;',
+      [Level.Error]: 'color: red;font-weight: bold;',
+      [Level.Fatal]: 'color: red;font-weight: bold;',
+      [Level.Off]: 'color: red;font-weight: bold;',
+    },
+    startLevel = Level.Debug,
+    showApplication = false,
+    showTime = true,
+  }: {
+    styleConfig?: Record<LEVEL, string>;
+    startLevel?: LEVEL;
+    showApplication?: boolean;
+    showTime?: boolean;
+  } = {}) {
+    super({ startLevel });
+    this.showApplication = showApplication;
+    this.styleConfig = styleConfig;
+    this.showTime = showTime;
   }
   log(level: LEVEL, path: string, message: any, application: Application): void {
-    const style = this.option.styleConfig[level];
+    const style = this.styleConfig[level];
     const argList = [
       `%c[${levelNames[level]}]`,
       style,
-      ...(this.option.showApplication ? [] : [`[${application.name}]`]),
+      ...(this.showTime ? [`[${this.dateFormatter(new Date())}]`] : []),
+      ...(this.showApplication ? [] : [`[${application.name}]`]),
       ...[`[${path}]`],
       ...(typeof message !== 'string' ? [message] : [`${message}`]),
     ];
@@ -111,7 +114,7 @@ export class ConsoleRecorder extends Recorder {
   close() {}
 }
 export class WriteableRecorder extends Recorder {
-  private readonly writeable: Writable;
+  protected readonly writeable: Writable;
   constructor(writeable: Writable, option: RecorderConstructorOptions = {}) {
     if (writeable.writableEnded || writeable.closed) {
       throw new Error('The writeable is already ended.');
@@ -138,7 +141,7 @@ export class FileRecorder extends WriteableRecorder {
   }
 }
 export class EventEmitterRecorder extends Recorder {
-  private listeners: ((info: {
+  protected listeners: ((info: {
     level: LEVEL;
     path: string;
     message: any;

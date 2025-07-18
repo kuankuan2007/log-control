@@ -2,8 +2,8 @@ import {Application} from './app.js';
 import { LoggerPath, Level, LEVEL } from './types.js';
 
 export class Logger {
-  private readonly path: LoggerPath;
-  private readonly application: Application;
+  protected readonly path: LoggerPath;
+  protected readonly application: Application;
   constructor(path: LoggerPath, application: Application) {
     this.path = path;
     this.application = application;

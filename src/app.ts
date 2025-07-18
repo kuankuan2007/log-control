@@ -4,8 +4,8 @@ import { ApplicationOptions, LEVEL, LoggerPath } from './types.js';
 
 export class Application {
   readonly name: string;
-  private recorders: Recorder[] = [];
-  private readonly logger: Logger;
+  protected recorders: Recorder[] = [];
+  protected readonly logger: Logger;
   readonly all: Logger['all'];
   readonly trace: Logger['trace'];
   readonly debug: Logger['debug'];
