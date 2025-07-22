@@ -34,8 +34,7 @@
   ],
   "type": "module",
   "keywords": [
-    "markdown",
-    "parser",
+    "log",
     "kuankuan"
   ],
   "dependencies": {
